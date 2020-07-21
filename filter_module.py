@@ -37,12 +37,13 @@ class HeatKernelApproximation(object):
 
 
 class Gaussian(object):
-    def __init__(self, mu=0.5, theta=1, k=5):
+    def __init__(self, mu=0.5, theta=1, k=5, rescale=False):
         self.theta = theta
         self.mu = mu
         self.k = k
         self.coefs = [2 * (-1)**i * iv(i, self.theta) for i in range(self.k)]
         self.coefs[0] = self.coefs[0]/2
+        self.rescale = rescale
 
     def prop(self, mx, emb):
         row_num, col_sum = mx.shape
@@ -67,7 +68,8 @@ class Gaussian(object):
             Lx0 = Lx1
             Lx1 = Lx2
             del Lx2
-        conv = mx.dot(emb - conv)
+        if self.rescale:
+            conv = mx.dot(emb - conv)
         return conv
 
 

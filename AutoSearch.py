@@ -10,6 +10,7 @@ from utils import load_embedding, load_adjacency_mx, sigmoid
 class AutoSearch(object):
     def __init__(self, args):
         self.prop_types = args.prop_types
+        self.max_evals = args.max_evals
 
         # load adjacency matrix and raw embedding
         self.emb = load_embedding(args.emb)
@@ -30,6 +31,7 @@ class AutoSearch(object):
         if "gaussian" in self.prop_types:
             space["mu"] = hp.uniform("mu", -4, 2)
             space["theta"] = hp.uniform("theta", 0, 4)
+            space["rescale"] = hp.choice("rescale", [0, 1])
         if "ppr" in self.prop_types:
             space["alpha"] = hp.uniform("alpha", 0, 1)
         return space
@@ -71,12 +73,14 @@ class AutoSearch(object):
         search_space = self.build_search_space()
 
         trials = Trials()
-        best = fmin(self.target_func, search_space, algo=tpe.suggest, max_evals=100, trials=trials)
+        best = fmin(self.target_func, search_space, algo=tpe.suggest, max_evals=self.max_evals, trials=trials)
         print(f"best parameters: {best}")
 
         with open("search_.log", "w") as f:
-            f.write(str(trials))
+            for trial in trials:
+                f.write(str(trial))
 
+        best["k"] = best["k"] + 1
         best_result = self.prop(best)
 
         return best_result[0]
@@ -89,13 +93,16 @@ class PlainFilter(object):
         # load adjacency matrix and raw embedding
         self.emb = load_embedding(args.emb)
         self.adj, self.num_nodes, self.num_edges = load_adjacency_mx(args.adj)
+        self.rescale = args.rescale
 
     def __call__(self):
         # propagate the embedding
+        if len(self.prop_types) == 1 and self.prop_types[0] == "identity":
+            return self.emb
 
         prop_result = []
         for tp in self.prop_types:
-            prop_result.append(propagate(self.adj, self.emb, tp))
+            prop_result.append(propagate(self.adj, self.emb, tp, resale=self.rescale))
         prop_result_emb = sum(prop_result) / len(prop_result)
         # prop_result_emb = NodeAdaptiveEncoder.prop(prop_result_emb)
 

@@ -17,20 +17,21 @@ class Timer(object):
         print(f"{self.name} cost time: {time.time() - self.t}s")
 
 
-def propagate(mx, emb, stype, space=None):
+def propagate(mx, emb, stype, space=None, resale=False):
     if space is not None:
-        k = space["k"] + 1
+        k = space["k"]
         if stype == "heat":
             # negative
-            heat_kernel = HeatKernelApproximation() if space is None else HeatKernelApproximation(space["t"], k)
+            heat_kernel = HeatKernelApproximation(space["t"], k)
             result = heat_kernel.prop(mx, emb)
         elif stype == "ppr":
             # relatively good,
-            ppr = PPR() if space is None else PPR(space["alpha"], k)
+            ppr = PPR(space["alpha"], k)
             result = ppr.prop(mx, emb)
         elif stype == "gaussian":
             # little positive, but almost zero effects
-            gaussian = Gaussian() if space is None else Gaussian(space["mu"], space["theta"], k)
+            rescale = space["rescale"] == 1
+            gaussian = Gaussian(space["mu"], space["theta"], k, rescale)
             result = gaussian.prop(mx, emb)
         elif stype == "sc":
             # negative
@@ -42,17 +43,17 @@ def propagate(mx, emb, stype, space=None):
         if stype == "heat":
             with Timer("HeatKernel") as t:
                 # negative
-                heat_kernel = HeatKernelApproximation() if space is None else HeatKernelApproximation()
+                heat_kernel = HeatKernelApproximation()
                 result = heat_kernel.prop(mx, emb)
         elif stype == "ppr":
             with Timer("PPR") as t:
                 # relatively good,
-                ppr = PPR() if space is None else PPR()
+                ppr = PPR()
                 result = ppr.prop(mx, emb)
         elif stype == "gaussian":
             with Timer("Gaussian") as t:
                 # little positive, but almost zero effects
-                gaussian = Gaussian() if space is None else Gaussian()
+                gaussian = Gaussian(rescale=resale)
                 result = gaussian.prop(mx, emb)
         elif stype == "sc":
             with Timer("SignalRescaling") as t:

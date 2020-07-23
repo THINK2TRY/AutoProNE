@@ -22,8 +22,7 @@ class SearchFilter(object):
 
     def build_search_space(self):
         space = {}
-        space["node_adapt"] = hp.choice("node_adapt", [0, 1])
-        space["k"] = hp.choice("k", [3, 4, 5])
+        # space["node_adapt"] = hp.choice("node_adapt", [0, 1])
         space["prop_type"] = hp.choice("prop_type", self.prop_types)
         if "heat" in self.prop_types:
             space["t"] = hp.uniform("t", 0.1, 0.9)
@@ -47,18 +46,13 @@ class SearchFilter(object):
         # --
         neg_order = np.random.permutation(np.arange(self.num_nodes))
         neg_prop_result = propagate(self.adj, self.emb[neg_order], selected_prop, params)
-        neg_prop_result[neg_order] = neg_prop_result
-        if params["node_adapt"] == 1:
-            prop_result = NodeAdaptiveEncoder.prop(prop_result)
-            # --
-            neg_prop_result = NodeAdaptiveEncoder.prop(prop_result)
         return prop_result, neg_prop_result
 
     def loss_func(self, prop_emb):
         # Sparest Cut Loss
         pairs = np.random.choice(self.num_nodes, (2, self.negative_pairs))
         neg_emb = prop_emb[pairs]
-        loss = np.sum((neg_emb[0] - neg_emb[1])**2) / self.negative_pairs * self.num_edges
+        loss = np.sum((neg_emb[0] - neg_emb[1])**2, dim=1).mean()
         return 1./loss
 
     def info_loss(self, prop_emb, neg_prop_emb):
@@ -67,9 +61,13 @@ class SearchFilter(object):
 
         pos_info = pos_glb.dot(prop_emb.T)
         neg_info = pos_glb.dot(neg_prop_emb.T)
-        pos_loss = np.sum(np.log(sigmoid(pos_info))) / self.num_nodes
-        neg_loss = np.sum(np.log(1 - sigmoid(neg_info))) / self.num_nodes
-        return -(pos_loss + neg_loss) / 2
+        pos_loss = np.mean(np.log(sigmoid(pos_info)))
+        neg_loss = np.mean(np.log(1 - sigmoid(neg_info)))
+
+        semi_pos_info = pos_glb.dot(self.emb.T)
+        semi_loss = np.mean(np.log(1 - sigmoid(semi_pos_info))) / 3
+
+        return -(pos_loss + neg_loss) / 3 + semi_loss
 
     def __call__(self):
         search_space = self.build_search_space()
@@ -79,10 +77,9 @@ class SearchFilter(object):
 
         with open("search_.log", "w") as f:
             for trial in trials:
-                f.write(str(trial))
+                f.write(str(trial) + "\n")
 
         best["prop_type"] = self.prop_types[best["prop_type"]]
-        best["k"] = best["k"] + 1
         best_result = self.prop(best)[0]
         print(f"best parameters: {best}")
 

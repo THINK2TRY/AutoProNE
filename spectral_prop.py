@@ -3,7 +3,7 @@ import scipy
 from sklearn import preprocessing
 import time
 
-from filter_module import HeatKernel, PPR, Gaussian, SignalRescaling, HeatKernelApproximation
+from filter_module import HeatKernel, PPR, Gaussian, SignalRescaling, HeatKernelApproximation, GaussianApproximation
 
 
 class Timer(object):
@@ -19,26 +19,26 @@ class Timer(object):
 
 def propagate(mx, emb, stype, space=None, resale=False):
     if space is not None:
-        k = space["k"]
         if stype == "heat":
             # negative
-            heat_kernel = HeatKernelApproximation(space["t"], k)
+            heat_kernel = HeatKernelApproximation(t=space["t"])
             result = heat_kernel.prop(mx, emb)
         elif stype == "ppr":
             # relatively good,
-            ppr = PPR(space["alpha"], k)
+            ppr = PPR(alpha=space["alpha"])
             result = ppr.prop(mx, emb)
         elif stype == "gaussian":
             # little positive, but almost zero effects
-            rescale = space["rescale"] == 1
-            gaussian = Gaussian(space["mu"], space["theta"], k, rescale)
+            # rescale = space["rescale"] == 1
+            # gaussian = Gaussian(mu=space["mu"], theta=space["theta"], rescale=rescale)
+            gaussian = GaussianApproximation(mu=space["mu"], theta=space["theta"])
             result = gaussian.prop(mx, emb)
         elif stype == "sc":
             # negative
             signal_rs = SignalRescaling()
             result = signal_rs.prop(mx, emb)
         else:
-            raise ValueError("please use filter in ['heat', 'ppr', 'gaussian', 'sc']")
+            raise ValueError("please use filter in ['heat', 'ppr', 'gaussian', 'sc'], currently use {}".format(stype))
     else:
         if stype == "heat":
             with Timer("HeatKernel") as t:
@@ -53,7 +53,8 @@ def propagate(mx, emb, stype, space=None, resale=False):
         elif stype == "gaussian":
             with Timer("Gaussian") as t:
                 # little positive, but almost zero effects
-                gaussian = Gaussian(rescale=resale)
+                # gaussian = Gaussian(rescale=resale)
+                gaussian = GaussianApproximation()
                 result = gaussian.prop(mx, emb)
         elif stype == "sc":
             with Timer("SignalRescaling") as t:
@@ -61,7 +62,7 @@ def propagate(mx, emb, stype, space=None, resale=False):
                 signal_rs = SignalRescaling()
                 result = signal_rs.prop(mx, emb)
         else:
-            raise ValueError("please use filter in ['heat', 'ppr', 'gaussian', 'sc']")
+            raise ValueError("please use filter in ['heat', 'ppr', 'gaussian', 'sc'], currently use {}".format(stype))
     return result
 
 

@@ -23,7 +23,7 @@ class HeatKernel(object):
 
 
 class HeatKernelApproximation(object):
-    def __init__(self, t=0.5, k=5):
+    def __init__(self, t=0.5, k=3):
         self.t = t
         self.k = k
 
@@ -37,11 +37,11 @@ class HeatKernelApproximation(object):
 
 
 class Gaussian(object):
-    def __init__(self, mu=0.5, theta=1, k=5, rescale=False):
+    def __init__(self, mu=0.5, theta=1, rescale=False, k=3):
         self.theta = theta
         self.mu = mu
         self.k = k
-        self.coefs = [2 * (-1)**i * iv(i, self.theta) for i in range(self.k)]
+        self.coefs = [2 * (-1)**i * iv(i, self.theta) for i in range(self.k + 3)]
         self.coefs[0] = self.coefs[0]/2
         self.rescale = rescale
 
@@ -61,7 +61,7 @@ class Gaussian(object):
         conv -= 2 * iv(1, self.theta) * Lx1
         for i in range(2, self.k):
             Lx2 = mx_hat.dot(Lx1)
-            Lx2 = (mx.dot(Lx2) - 2 * Lx1) - Lx0
+            Lx2 = (mx_hat.dot(Lx2) - 2 * Lx1) - Lx0
 
             # Lx2 = 2 * mx_hat.dot(Lx1) - Lx0
             conv += self.coefs[i] * Lx2
@@ -73,11 +73,37 @@ class Gaussian(object):
         return conv
 
 
+class GaussianApproximation(object):
+    def __init__(self,  mu=0.2, theta=1, k=2):
+        self.theta = theta
+        self.mu = mu
+        # self.k = k
+
+    def prop(self, mx, emb):
+        row_num, col_sum = mx.shape
+        mx = mx + sp.eye(row_num)
+        mx_norm = preprocessing.normalize(mx, "l1")
+        # laplacian = sp.eye(row_num) - mx_norm
+        # mx_hat = laplacian - self.mu * sp.eye(row_num)
+        mx_hat = (1 - self.mu) * sp.eye(row_num) - mx_norm
+
+        lx1 = mx_hat.dot(emb)
+        lx1 = -0.5 * self.theta * (mx_hat.dot(lx1) - emb)
+
+        lx_result = emb + lx1
+
+        lx2 = mx_hat.dot(lx1)
+        lx2 = -0.5 * self.theta * (mx_hat.dot(lx2) - lx1)/2
+        lx_result += lx2
+
+        return lx_result
+
+
 class PPR(object):
     """
         applying sparsification to accelerate computation
     """
-    def __init__(self, alpha=0.5, k=5):
+    def __init__(self, alpha=0.5, k=3):
         self.alpha = alpha
         self.k = k
         self.alpha_list = [self.alpha * (1 - self.alpha) ** i for i in range(self.k)]

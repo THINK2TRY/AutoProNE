@@ -20,21 +20,18 @@ class Timer(object):
 def propagate(mx, emb, stype, space=None, resale=False):
     if space is not None:
         if stype == "heat":
-            # negative
             heat_kernel = HeatKernelApproximation(t=space["t"])
             result = heat_kernel.prop(mx, emb)
         elif stype == "ppr":
-            # relatively good,
             ppr = PPR(alpha=space["alpha"])
             result = ppr.prop(mx, emb)
         elif stype == "gaussian":
-            # little positive, but almost zero effects
             # rescale = space["rescale"] == 1
-            # gaussian = Gaussian(mu=space["mu"], theta=space["theta"], rescale=rescale)
-            gaussian = GaussianApproximation(mu=space["mu"], theta=space["theta"])
+            rescale = False
+            gaussian = Gaussian(mu=space["mu"], theta=space["theta"], rescale=rescale)
+            # gaussian = GaussianApproximation(mu=space["mu"], theta=space["theta"])
             result = gaussian.prop(mx, emb)
         elif stype == "sc":
-            # negative
             signal_rs = SignalRescaling()
             result = signal_rs.prop(mx, emb)
         else:
@@ -44,6 +41,7 @@ def propagate(mx, emb, stype, space=None, resale=False):
             with Timer("HeatKernel") as t:
                 # negative
                 heat_kernel = HeatKernelApproximation()
+                # heat_kernel = HeatKernel()
                 result = heat_kernel.prop(mx, emb)
         elif stype == "ppr":
             with Timer("PPR") as t:
@@ -53,8 +51,8 @@ def propagate(mx, emb, stype, space=None, resale=False):
         elif stype == "gaussian":
             with Timer("Gaussian") as t:
                 # little positive, but almost zero effects
-                # gaussian = Gaussian(rescale=resale)
-                gaussian = GaussianApproximation()
+                gaussian = Gaussian(rescale=resale)
+                # gaussian = GaussianApproximation()
                 result = gaussian.prop(mx, emb)
         elif stype == "sc":
             with Timer("SignalRescaling") as t:

@@ -1,12 +1,16 @@
 import argparse
+import os
 import time
+import numpy as np
 
 from AutoSearch import AutoSearch, PlainFilter
 from SearchFilter import SearchFilter
 from ContraSearch import ContraSearch
 from ConcatSearch import ConcatSearch
+from optunaConcatSearch import opConcatSearch
 from spectral_prop import get_embedding_dense
 from evaluate import evaluate
+from evalute_semi import evaluate_pre
 from utils import save_embedding
 
 
@@ -24,21 +28,31 @@ def build_args():
     parser.add_argument("--filter-search", action="store_true", help="Search an appropriate filter")
     parser.add_argument("--contra-search", action="store_true")
     parser.add_argument("--concat-search", action="store_true")
+    parser.add_argument("--loss", type=str, default="infomax")
+    parser.add_argument("--svd", action="store_false")
 
     t_args = parser.parse_args()
     if "dataset" not in t_args and "adj" not in t_args:
         raise ValueError("'adj' or 'dataset' is required")
     if t_args.dataset:
-        t_args.adj = t_args.dataset + ".ungraph"
-        t_args.label = t_args.dataset + ".cmty"
+        t_args.adj = os.path.join("./data", t_args.dataset + ".ungraph")
+        t_args.label = os.path.join("./data", t_args.dataset + ".cmty")
     else:
         rind = t_args.adj.rindex(".")
         t_args.label = t_args.adj[:rind] + ".cmty"
+        t_args.dataset = t_args.adj[:rind].split("/")[-1]
     return t_args
 
 
 def main(args):
+    np.random.seed(0)
     out_path = args.saved_path
+    if args.dataset in ["cora", "citeseer", "pubmed"]:
+        args.dim = 512
+        args.svd = False
+    else:
+        args.dim = 128
+        args.svd = True
 
     if args.attention_search:
         model = AutoSearch(args)
@@ -47,9 +61,11 @@ def main(args):
     elif args.contra_search:
         model = ContraSearch(args)
     elif args.concat_search:
-        model = ConcatSearch(args)
+        model = opConcatSearch(args)
     else:
         model = PlainFilter(args)
+
+    print(args)
 
     print(" ---- start ----")
     start = time.time()
@@ -66,11 +82,15 @@ def main(args):
     # save the result
     print("... saving result ...")
     # save_npy_embedding(out_path, spectral_emb)
-    save_embedding(out_path, spectral_emb)
+    out_path = f"{out_path}_{args.dataset}.emb"
+    # save_embedding(out_path, spectral_emb)
 
     # evaluate ...
     print(" ... evaluating ...")
-    evaluate(spectral_emb, label=args.label)
+    if args.dataset in ["cora", "citeseer", "pubmed"]:
+        evaluate_pre(args, spectral_emb)
+    else:
+        evaluate(spectral_emb, label=args.label)
 
 
 if __name__ == "__main__":
@@ -83,5 +103,4 @@ if __name__ == "__main__":
 
     args = build_args()
 
-    print(args)
     main(args)

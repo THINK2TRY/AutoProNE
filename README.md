@@ -9,3 +9,6 @@ python main.py --emb ./emb/wiki_deepwalk.embedding --adj ./emb/wikipedia.ungraph
 * --concat-search : search the filters used to concat, action="store_true"
 * --contra-search : search one filter, action="store_true"
 * --prop-types : types of filters to use, options : ['ppr', 'heat', 'gaussian', 'sc']
+* --max-evals : iterations of automl to optimize loss, default=50
+
+Currently using `optuna` as automl tool.

@@ -1,8 +1,11 @@
 import networkx as nx
 import numpy as np
-from gensim.models import Word2Vec, KeyedVectors
 import scipy.sparse as sp
-from sklearn import preprocessing
+
+import torch
+import torch.nn as nn
+
+from gensim.models import KeyedVectors
 
 
 def load_w2v_embeddings(embeddings_file):
@@ -82,14 +85,6 @@ def load_labels_youtube(labels_file, nodesize):
 
 def sigmoid(x):
     return 1./(1+np.exp(-x))
-
-# ==============
-# just for test
-# ==============
-
-
-import torch
-import torch.nn as nn
 
 
 class LogReg(nn.Module):

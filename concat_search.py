@@ -4,8 +4,7 @@ import math
 import random
 import scipy.sparse as sp
 
-from spectral_prop import get_embedding_dense
-from spectral_prop import propagate
+from spectral_propagation import get_embedding_dense, propagate
 from utils import load_embedding, load_adjacency_mx, sigmoid
 
 
@@ -13,7 +12,6 @@ class opConcatSearch(object):
     def __init__(self, args):
         self.prop_types = args.prop_types
         self.max_evals = args.max_evals
-        self.dim = args.dim
         self.svd = args.svd
         self.loss_type = args.loss
 
@@ -21,6 +19,7 @@ class opConcatSearch(object):
         self.emb = load_embedding(args.emb)
         self.adj, self.num_nodes, self.num_edges = load_adjacency_mx(args.adj)
         self.laplacian = None
+        self.dim = self.emb.shape[1]
 
         assert self.num_nodes == self.emb.shape[0]
         # negative pairs
@@ -70,7 +69,6 @@ class opConcatSearch(object):
                 neg_prop = propagate(self.adj, self.emb[pmt], s_prop, params)
                 neg_prop[pmt] = neg_prop
                 neg_prop_result.append(neg_prop)
-
             return np.array(prop_result_list), np.array(neg_prop_result)
         elif self.loss_type == "infonce":
             return np.array(prop_result_list), None

@@ -2,8 +2,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from utils import LogReg
 import utils
+from utils import LogReg
 
 hid_units = 512
 

@@ -92,32 +92,6 @@ class Gaussian(object):
         return conv
 
 
-class GaussianApproximation(object):
-    def __init__(self,  mu=0.2, theta=1, k=2):
-        self.theta = theta
-        self.mu = mu
-        # self.k = k
-
-    def prop(self, mx, emb):
-        row_num, col_sum = mx.shape
-        mx = mx + sp.eye(row_num)
-        mx_norm = preprocessing.normalize(mx, "l1")
-        # laplacian = sp.eye(row_num) - mx_norm
-        # mx_hat = laplacian - self.mu * sp.eye(row_num)
-        mx_hat = (1 - self.mu) * sp.eye(row_num) - mx_norm
-
-        lx1 = mx_hat.dot(emb)
-        lx1 = -0.5 * self.theta * (mx_hat.dot(lx1) - emb)
-
-        lx_result = emb + lx1
-
-        lx2 = mx_hat.dot(lx1)
-        lx2 = -0.5 * self.theta * (mx_hat.dot(lx2) - lx1)/2
-        lx_result += lx2
-
-        return lx_result
-
-
 class PPR(object):
     """
         applying sparsification to accelerate computation

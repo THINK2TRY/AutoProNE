@@ -1,9 +1,9 @@
 import numpy as np
 import scipy
-from sklearn import preprocessing
 import time
+from sklearn import preprocessing
 
-from filter_module import HeatKernel, PPR, Gaussian, SignalRescaling, HeatKernelApproximation, GaussianApproximation
+from filter_module import PPR, Gaussian, SignalRescaling, HeatKernelApproximation
 
 
 class Timer(object):
@@ -17,7 +17,7 @@ class Timer(object):
         print(f"{self.name} cost time: {time.time() - self.t}s")
 
 
-def propagate(mx, emb, stype, space=None, resale=False):
+def propagate(mx, emb, stype, space=None):
     if space is not None:
         if stype == "heat":
             heat_kernel = HeatKernelApproximation(t=space["t"])
@@ -26,10 +26,7 @@ def propagate(mx, emb, stype, space=None, resale=False):
             ppr = PPR(alpha=space["alpha"])
             result = ppr.prop(mx, emb)
         elif stype == "gaussian":
-            # rescale = space["rescale"] == 1
-            rescale = False
-            gaussian = Gaussian(mu=space["mu"], theta=space["theta"], rescale=rescale)
-            # gaussian = GaussianApproximation(mu=space["mu"], theta=space["theta"])
+            gaussian = Gaussian(mu=space["mu"], theta=space["theta"])
             result = gaussian.prop(mx, emb)
         elif stype == "sc":
             signal_rs = SignalRescaling()
@@ -39,24 +36,18 @@ def propagate(mx, emb, stype, space=None, resale=False):
     else:
         if stype == "heat":
             with Timer("HeatKernel") as t:
-                # negative
                 heat_kernel = HeatKernelApproximation()
-                # heat_kernel = HeatKernel()
                 result = heat_kernel.prop(mx, emb)
         elif stype == "ppr":
             with Timer("PPR") as t:
-                # relatively good,
                 ppr = PPR()
                 result = ppr.prop(mx, emb)
         elif stype == "gaussian":
             with Timer("Gaussian") as t:
-                # little positive, but almost zero effects
-                gaussian = Gaussian(rescale=resale)
-                # gaussian = GaussianApproximation()
+                gaussian = Gaussian()
                 result = gaussian.prop(mx, emb)
         elif stype == "sc":
             with Timer("SignalRescaling") as t:
-                # negative
                 signal_rs = SignalRescaling()
                 result = signal_rs.prop(mx, emb)
         else:
@@ -66,7 +57,6 @@ def propagate(mx, emb, stype, space=None, resale=False):
 
 def get_embedding_dense(matrix, dimension):
     # get dense embedding via SVD
-    t1 = time.time()
     U, s, Vh = scipy.linalg.svd(matrix, full_matrices=False, check_finite=False, overwrite_a=True)
     U = np.array(U)
     U = U[:, :dimension]

@@ -75,9 +75,9 @@ class SearchFilter(object):
         trials = Trials()
         best = fmin(self.target_func, search_space, algo=tpe.suggest, max_evals=self.max_evals, trials=trials)
 
-        with open("search_.log", "w") as f:
-            for trial in trials:
-                f.write(str(trial) + "\n")
+        # with open("search_.log", "w") as f:
+        #     for trial in trials:
+        #         f.write(str(trial) + "\n")
 
         best["prop_type"] = self.prop_types[best["prop_type"]]
         best_result = self.prop(best)[0]

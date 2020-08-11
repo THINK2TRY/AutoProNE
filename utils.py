@@ -57,10 +57,27 @@ def load_labels(labels_file, nodesize):
         label = sp.lil_matrix((nodesize, len(context)))
 
         for i, line in enumerate(context):
-            line = map(int,line.strip().split('\t'))
+            line = map(int, line.strip().split('\t'))
             for node in line:
                 label[node, i] = 1
     return label
+
+
+def load_labels_youtube(labels_file, nodesize):
+    labeled_nodes = set()
+    with open(labels_file) as f:
+        context = f.readlines()
+        print('class number: ', len(context))
+        label = sp.lil_matrix((nodesize, len(context)))
+
+        for i, line in enumerate(context):
+            line = map(int, line.strip().split('\t'))
+            for node in line:
+                label[node-1, i] = 1
+                labeled_nodes.add(node-1)
+    labeled_nodes = sorted(list(labeled_nodes))
+    labeled_nodes = np.array(labeled_nodes)
+    return label.todense()[labeled_nodes], labeled_nodes
 
 
 def sigmoid(x):

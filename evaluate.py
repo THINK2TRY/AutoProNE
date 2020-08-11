@@ -3,15 +3,13 @@ import numpy as np
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score
-from scipy.io import loadmat
 from sklearn.utils import shuffle as skshuffle
 from collections import defaultdict
 from scipy import sparse
 import warnings
-import multiprocessing
 warnings.filterwarnings("ignore")
 
-from utils import load_labels, load_embedding
+from utils import load_labels, load_embedding, load_labels_youtube
 
 
 class TopKRanker(OneVsRestClassifier):
@@ -51,7 +49,11 @@ def evaluate(emb, number_shuffles=5, label=None):
     print(features_matrix.shape)
     num_nodes = features_matrix.shape[0]
 
-    if label is None:
+    if "youtube" in label:
+        label_matrix, labeled_nodes = load_labels_youtube(label, num_nodes)
+        features_matrix = features_matrix[labeled_nodes]
+        num_nodes = len(labeled_nodes)
+    elif label is None:
         label_matrix = load_labels(args.label, num_nodes)
     else:
         label_matrix = load_labels(label, num_nodes)
@@ -66,6 +68,7 @@ def evaluate(emb, number_shuffles=5, label=None):
         training_percents = [0.1, 0.3, 0.5, 0.7, 0.9]
     else:
         training_percents = [0.01, 0.03, 0.05, 0.07, 0.09]
+
 
     for train_percent in training_percents:
         # pool = multiprocessing.Pool(processes=shuffles)

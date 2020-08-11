@@ -30,6 +30,7 @@ def build_args():
     parser.add_argument("--concat-search", action="store_true")
     parser.add_argument("--loss", type=str, default="infomax")
     parser.add_argument("--svd", action="store_false")
+    parser.add_argument("--no-eval", action="store_false")
 
     t_args = parser.parse_args()
     if "dataset" not in t_args and "adj" not in t_args:
@@ -86,11 +87,12 @@ def main(args):
     # save_embedding(out_path, spectral_emb)
 
     # evaluate ...
-    print(" ... evaluating ...")
-    if args.dataset in ["cora", "citeseer", "pubmed"]:
-        evaluate_pre(args, spectral_emb)
-    else:
-        evaluate(spectral_emb, label=args.label)
+    if not args.no_eval:
+        print(" ... evaluating ...")
+        if args.dataset in ["cora", "citeseer", "pubmed"]:
+            evaluate_pre(args, spectral_emb)
+        else:
+            evaluate(spectral_emb, label=args.label)
 
 
 if __name__ == "__main__":

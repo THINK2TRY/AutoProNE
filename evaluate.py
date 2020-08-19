@@ -105,6 +105,7 @@ def evaluate(emb, number_shuffles=5, label=None):
     print('Results, using embeddings of dimensionality', X.shape[1])
     print('-------------------')
     print('Train percent:', 'average f1-score')
+    fres = dict()
     for train_percent in sorted(all_results.keys()):
         av = 0
         stder = np.ones(number_shuffles)
@@ -115,6 +116,8 @@ def evaluate(emb, number_shuffles=5, label=None):
             av += x["micro"]
         av /= number_shuffles
         print(train_percent, ":", av)
+        fres[train_percent] = av
+    return fres
 
 
 def parse_args():

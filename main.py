@@ -23,6 +23,7 @@ def build_args():
     parser.add_argument("--loss", type=str, default="infomax")
     parser.add_argument("--no-svd", action="store_false")
     parser.add_argument("--no-eval", action="store_true")
+    parser.add_argument("--workers", type=int, default=10)
 
     t_args = parser.parse_args()
     if "dataset" not in t_args and "adj" not in t_args:
@@ -68,10 +69,35 @@ def main(args):
     if not args.no_eval:
         print(" ... evaluating ...")
         if args.dataset in ["cora", "citeseer", "pubmed"]:
-            evaluate_pre(args, spectral_emb)
+            return evaluate_pre(args, spectral_emb)
         else:
-            evaluate(spectral_emb, label=args.label)
+            return evaluate(spectral_emb, label=args.label)
 
+
+def enumerate_test():
+    args = build_args()
+    emb_map = {"ppi": "ppi", "blogcatalog": "blog", "wikipedia": "wiki", "dblp": "dblp", "youtube": "youtube"}
+    f = open("nigh_res", "w")
+    for dataset in ["ppi", "blogcatalog", "wikipedia", "dblp", "youtube"]:
+        for alg in ["deepwalk", "line", "node2vec", "netmf", "hope"]:
+            if dataset in ["dblp", "youtube"] and alg in ["netmf", "hope"]:
+                continue
+            ds = emb_map[dataset]
+            emb_path = f"../net_emb/{alg}/{ds}_{alg}.embedding"
+            adj_path = f"./data/{dataset}.ungraph"
+            label_path = f"./data/{dataset}.cmty"
+            for prop in ["sc", "ppr", "heat", "gaussian"]:
+                print(f"{dataset}, {alg}, {prop}")
+                args.prop_types = [prop]
+                args.emb = emb_path
+                args.adj = adj_path
+                args.label = label_path
+                res = main(args)
+                f.write(f"-- {dataset} -- {alg} -- {prop} -- \n")
+                for key, val in res.items():
+                    f.write(f"{key} : {val} \n")
+            f.write("\n")
+    f.close()
 
 if __name__ == "__main__":
     args = build_args()

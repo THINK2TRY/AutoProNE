@@ -14,6 +14,7 @@ class opConcatSearch(object):
         self.max_evals = args.max_evals
         self.svd = args.svd
         self.loss_type = args.loss
+        self.n_workers = args.workers
 
         # load adjacency matrix and raw embedding
         self.emb = load_embedding(args.emb)
@@ -36,7 +37,8 @@ class opConcatSearch(object):
             self.neg_index = np.array(neg_index)
             self.neg_emb = self.emb[self.neg_index]
         elif self.loss_type == "infomax":
-            self.permutation = np.random.permutation(np.arange(self.num_nodes))
+            # self.permutation = np.random.permutation(np.arange(self.num_nodes))
+            pass
 
     def build_search_space(self, trial):
         space = {}
@@ -79,10 +81,10 @@ class opConcatSearch(object):
 
     def target_func(self, trial):
         params = self.build_search_space(trial)
+        self.permutation = np.random.permutation(np.arange(self.num_nodes))
         prop_result_emb, neg_prop_result_emb = self.prop(params)
         if prop_result_emb is None:
             return 100
-        # return {"loss": self.loss_func(prop_result_emb), "status": STATUS_OK}
         if self.loss_type == "infomax":
             loss = self.infomax_loss(prop_result_emb, neg_prop_result_emb)
         elif self.loss_type == "infonce":
@@ -153,7 +155,7 @@ class opConcatSearch(object):
 
     def __call__(self):
         study = optuna.create_study()
-        study.optimize(self.target_func, n_jobs=10, n_trials=self.max_evals)
+        study.optimize(self.target_func, n_jobs=self.n_workers, n_trials=self.max_evals)
 
         best_params = study.best_params
 

@@ -149,6 +149,43 @@ class SignalRescaling(object):
         return conv
 
 
+class ProNE(object):
+    def __call__(self, A, a, order=10, mu=0.1, s=0.5):
+        # NE Enhancement via Spectral Propagation
+        print('Chebyshev Series -----------------')
+
+        if order == 1:
+            return a
+
+        node_number = a.shape[0]
+
+        A = sp.eye(node_number) + A
+        DA = preprocessing.normalize(A, norm='l1')
+        L = sp.eye(node_number) - DA
+
+        M = L - mu * sp.eye(node_number)
+
+        Lx0 = a
+        Lx1 = M.dot(a)
+        Lx1 = 0.5 * M.dot(Lx1) - a
+
+        conv = iv(0, s) * Lx0
+        conv -= 2 * iv(1, s) * Lx1
+        for i in range(2, order):
+            Lx2 = M.dot(Lx1)
+            Lx2 = (M.dot(Lx2) - 2 * Lx1) - Lx0
+            #         Lx2 = 2*L.dot(Lx1) - Lx0
+            if i % 2 == 0:
+                conv += 2 * iv(i, s) * Lx2
+            else:
+                conv -= 2 * iv(i, s) * Lx2
+            Lx0 = Lx1
+            Lx1 = Lx2
+            del Lx2
+        mm = A.dot(a - conv)
+        return mm
+
+
 class NodeAdaptiveEncoder(object):
     """
         - shrink negative values in signal/feature matrix

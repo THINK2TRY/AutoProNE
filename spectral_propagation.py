@@ -3,7 +3,7 @@ import scipy
 import time
 from sklearn import preprocessing
 
-from filter_module import PPR, Gaussian, SignalRescaling, HeatKernelApproximation
+from filter_module import PPR, Gaussian, SignalRescaling, HeatKernelApproximation, ProNE
 
 
 class Timer(object):
@@ -50,6 +50,10 @@ def propagate(mx, emb, stype, space=None):
             with Timer("SignalRescaling") as t:
                 signal_rs = SignalRescaling()
                 result = signal_rs.prop(mx, emb)
+        elif stype == "prone":
+            with Timer("ProNE") as t:
+                signal_pro = ProNE()
+                result = signal_pro(mx, emb)
         else:
             raise ValueError("please use filter in ['heat', 'ppr', 'gaussian', 'sc'], currently use {}".format(stype))
     return result

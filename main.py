@@ -15,7 +15,7 @@ def build_args():
     parser.add_argument("--emb", type=str, required=True)
     parser.add_argument("--adj", type=str, required=False)
     parser.add_argument("--dataset", type=str, required=False)
-    parser.add_argument("--saved-path", type=str, default="./out/prop_emb")
+    parser.add_argument("--saved-path", type=str, default="./out/")
     parser.add_argument("--prop-types", nargs="+", default=["heat", "ppr", "gaussian", "sc"])
     parser.add_argument("--N", type=int, default=1000, help="Number of negative pairs sampled for auto-searching")
     parser.add_argument("--max-evals", type=int, default=100)
@@ -62,8 +62,8 @@ def main(args):
 
     # save the result
     print("... saving result ...")
-    out_path = f"{out_path}_{args.dataset}.emb"
-    # save_embedding(out_path, spectral_emb)
+    out_path = f"{out_path}_.emb"
+    save_embedding(out_path, spectral_emb)
 
     # ======= evaluate ========
     if not args.no_eval:

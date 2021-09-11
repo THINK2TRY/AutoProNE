@@ -1,6 +1,5 @@
 import math
 import numpy as np
-import scipy
 import scipy.sparse as sp
 from scipy.sparse.linalg import expm
 from scipy.special import iv
@@ -29,8 +28,7 @@ class HeatKernelApproximation(object):
         self.t = t
         self.k = k
 
-    def taylor(self, mx, emb):
-        mx_norm = preprocessing.normalize(mx, "l1")
+    def taylor(self, mx_norm, emb):
         result = [math.exp(self.t) * emb]
         for i in range(self.k - 1):
             temp_mx = self.t * mx_norm.dot(result[-1]) / (i + 1)
@@ -67,10 +65,8 @@ class Gaussian(object):
         self.coefs[0] = self.coefs[0] / 2
 
     # adj: 1 mul + 3 add,  emb: 2*k mul, 3*k add
-    def prop(self, mx, emb):
-        row_num, col_sum = mx.shape
-        mx = mx + sp.eye(row_num)
-        mx_norm = preprocessing.normalize(mx, "l1")
+    def prop(self, mx_norm, emb):
+        row_num, col_sum = mx_norm.shape
         mx_hat = (1 - self.mu) * sp.eye(row_num) - mx_norm
 
         Lx0 = emb

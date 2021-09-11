@@ -42,13 +42,23 @@ def load_embedding(path):
 
 
 def load_adjacency_mx(adj_path):
-    g = nx.read_edgelist(adj_path, nodetype=int, create_using=nx.DiGraph())
-    g = g.to_undirected()
+    weighted = False
+    if adj_path.endswith(".line_graph"):
+        weighted = True
+        g = nx.read_weighted_edgelist(adj_path, nodetype=int, create_using=nx.DiGraph())
+    else:
+        g = nx.read_edgelist(adj_path, nodetype=int, create_using=nx.DiGraph())
+        g = g.to_undirected()
     num_nodes = g.number_of_nodes()
     mx = sp.lil_matrix((num_nodes, num_nodes))
-    for e in g.edges:
-        mx[e[0], e[1]] = 1
-        mx[e[1], e[0]] = 1
+
+    if weighted:
+        for e in g.edges:
+            mx[e[0], e[1]] = g.edges[e[0], e[1]]["weight"] / 10
+    else:
+        for e in g.edges:
+            mx[e[0], e[1]] = 1
+            mx[e[1], e[0]] = 1
     return mx.tocsc(), g.number_of_nodes(), g.number_of_edges()
 
 

@@ -13,13 +13,13 @@ from utils import save_embedding
 def build_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--emb", type=str, required=True)
-    parser.add_argument("--adj", type=str, required=False)
+    parser.add_argument("--adj", type=str, required=False, help="path of graph")
     parser.add_argument("--dataset", type=str, required=False)
-    parser.add_argument("--saved-path", type=str, default="./out/")
+    parser.add_argument("--saved-path", type=str, default="./out/", help="path to save embeddings")
     parser.add_argument("--prop-types", nargs="+", default=["heat", "ppr", "gaussian", "sc"])
     parser.add_argument("--N", type=int, default=1000, help="Number of negative pairs sampled for auto-searching")
     parser.add_argument("--max-evals", type=int, default=100)
-    parser.add_argument("--concat-search", action="store_true")
+    parser.add_argument("--concat-search", action="store_true", help="concatenate the embeddings of selected filters")
     parser.add_argument("--loss", type=str, default="infomax")
     parser.add_argument("--no-svd", action="store_false")
     parser.add_argument("--no-eval", action="store_true")
@@ -39,6 +39,7 @@ def build_args():
 
 
 def main(args):
+    os.makedirs("./out", exist_ok=True)
     np.random.seed(0)
     out_path = args.saved_path
     if args.dataset in ["cora", "citeseer", "pubmed"]:
